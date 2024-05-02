@@ -29,5 +29,5 @@ jobs:
     if: ${{ github.event.pull_request.base.ref == 'prod' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: linzhenen/release-pull-request-creator@v0
+      - uses: linzhengen/release-pr-creator@v0.1.2
 ```
