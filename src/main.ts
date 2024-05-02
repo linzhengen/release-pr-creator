@@ -1,26 +1,71 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import { context, getOctokit } from '@actions/github'
 
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
 export async function run(): Promise<void> {
-  try {
-    const ms: string = core.getInput('milliseconds')
+  const { owner, repo } = context.repo
+  const token = core.getInput('github-token', { required: true })
+  const baseBranch = core.getInput('base-branch', { required: true })
+  const headBranch = core.getInput('head-branch', { required: true })
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+  const github = getOctokit(token)
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+  const { data: diffCommits } = await github.rest.repos.compareCommits({
+    owner,
+    repo,
+    base: baseBranch,
+    head: headBranch
+  })
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+  let prUrls = []
+  for (const commit of diffCommits.commits) {
+    const { data: commitPRs } =
+      await github.rest.repos.listPullRequestsAssociatedWithCommit({
+        owner,
+        repo,
+        commit_sha: commit.sha
+      })
+    for (const associatedPR of commitPRs) {
+      prUrls.push(associatedPR.html_url)
+    }
   }
+  prUrls = [...new Set(prUrls)]
+  const now = new Date()
+  const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${context.sha.substring(0, 7)} - RELEASE`
+  const prBody = `# What's Changed\n${prUrls.map(url => `- ${url}`).join('\n')}`
+
+  const { data: releasePRs } = await github.rest.pulls.list({
+    owner,
+    repo,
+    state: 'open',
+    base: baseBranch,
+    head: `${owner}:${headBranch}`
+  })
+
+  if (releasePRs.length > 1) {
+    throw new Error(
+      'There are multiple release PRs open. Please close all but one.'
+    )
+  }
+
+  if (releasePRs.length === 1) {
+    await github.rest.pulls.update({
+      owner,
+      repo,
+      pull_number: releasePRs[0].number,
+      title: prTitle,
+      body: prBody
+    })
+    console.info(`Updated release PR: ${releasePRs[0].html_url}`)
+    return
+  }
+
+  await github.rest.pulls.create({
+    owner,
+    repo,
+    title: prTitle,
+    body: prBody,
+    base: baseBranch,
+    head: headBranch
+  })
+  console.info(`Created release PR: ${owner}/${repo}/${headBranch}`)
 }

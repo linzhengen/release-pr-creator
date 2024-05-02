@@ -1,6 +1,6 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Release Pull Request Creator'
+description: 'Create a pull request for a release branch'
+author: 'linzhengen'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
@@ -9,10 +9,18 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  github-token:
+    description: The GitHub token used to create an authenticated client
+    default: ${{ github.token }}
+    required: false
+  base-branch:
+    description: The base branch to create the pull request to
     required: true
-    default: '1000'
+    default: prod
+  head-branch:
+    description: The head branch to create the pull request from
+    required: true
+    default: main
 
 # Define your outputs here.
 outputs:
