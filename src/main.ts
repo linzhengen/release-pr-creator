@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import { context, getOctokit } from '@actions/github'
+import { RequestError } from '@octokit/request-error'
 
 export async function run(): Promise<void> {
   const { owner, repo } = context.repo
@@ -20,7 +21,7 @@ export async function run(): Promise<void> {
         head: headBranch
       })
     if (status !== 200) {
-      console.warn(`Failed to compare commits: ${status}`)
+      core.warning(`Failed to compare commits: ${status}`)
       return
     }
 
@@ -37,13 +38,10 @@ export async function run(): Promise<void> {
       lastCommitSha = commit.sha
     }
   } catch (error) {
-    console.warn(`Failed to compare commits: ${error}, error: ${error}`)
+    core.warning(`Failed to compare commits: ${error}, error: ${error}`)
     return
   }
-  if (prUrls.length === 0) {
-    console.info('No PRs found in the commits')
-    return
-  }
+
   prUrls = [...new Set(prUrls)]
   const now = new Date()
   const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${lastCommitSha.substring(0, 7)} - RELEASE`
@@ -71,17 +69,28 @@ export async function run(): Promise<void> {
       title: prTitle,
       body: prBody
     })
-    console.info(`Updated release PR: ${releasePRs[0].html_url}`)
+    core.setOutput('release-pr-url', releasePRs[0].html_url)
+    core.info(`Updated release PR: ${releasePRs[0].html_url}`)
     return
   }
 
-  await github.rest.pulls.create({
-    owner,
-    repo,
-    title: prTitle,
-    body: prBody,
-    base: baseBranch,
-    head: headBranch
-  })
-  console.info(`Created release PR: ${owner}/${repo}/${headBranch}`)
+  try {
+    const { data: createdPr } = await github.rest.pulls.create({
+      owner,
+      repo,
+      title: prTitle,
+      body: prBody,
+      base: baseBranch,
+      head: headBranch
+    })
+    core.setOutput('release-pr-url', createdPr.html_url)
+    core.info(`Created release PR: ${owner}/${repo}/${headBranch}`)
+  } catch (error) {
+    if (error instanceof RequestError && error.status === 422) {
+      core.info(error.message)
+      return
+    }
+    core.warning(`Failed to create release PR: ${error}`)
+    throw error
+  }
 }
