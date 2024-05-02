@@ -40,7 +40,10 @@ export async function run(): Promise<void> {
     console.warn(`Failed to compare commits: ${error}, error: ${error}`)
     return
   }
-
+  if (prUrls.length === 0) {
+    console.info('No PRs found in the commits')
+    return
+  }
   prUrls = [...new Set(prUrls)]
   const now = new Date()
   const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${lastCommitSha.substring(0, 7)} - RELEASE`
