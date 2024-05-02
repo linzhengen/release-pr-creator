@@ -29272,6 +29272,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github_1 = __nccwpck_require__(5438);
+const request_error_1 = __nccwpck_require__(537);
 async function run() {
     const { owner, repo } = github_1.context.repo;
     const token = core.getInput('github-token', { required: true });
@@ -29288,7 +29289,7 @@ async function run() {
             head: headBranch
         });
         if (status !== 200) {
-            console.warn(`Failed to compare commits: ${status}`);
+            core.warning(`Failed to compare commits: ${status}`);
             return;
         }
         for (const commit of diffCommits.commits) {
@@ -29304,7 +29305,7 @@ async function run() {
         }
     }
     catch (error) {
-        console.warn(`Failed to compare commits: ${error}, error: ${error}`);
+        core.warning(`Failed to compare commits: ${error}, error: ${error}`);
         return;
     }
     prUrls = [...new Set(prUrls)];
@@ -29329,18 +29330,30 @@ async function run() {
             title: prTitle,
             body: prBody
         });
-        console.info(`Updated release PR: ${releasePRs[0].html_url}`);
+        core.setOutput('release-pr-url', releasePRs[0].html_url);
+        core.info(`Updated release PR: ${releasePRs[0].html_url}`);
         return;
     }
-    await github.rest.pulls.create({
-        owner,
-        repo,
-        title: prTitle,
-        body: prBody,
-        base: baseBranch,
-        head: headBranch
-    });
-    console.info(`Created release PR: ${owner}/${repo}/${headBranch}`);
+    try {
+        const { data: createdPr } = await github.rest.pulls.create({
+            owner,
+            repo,
+            title: prTitle,
+            body: prBody,
+            base: baseBranch,
+            head: headBranch
+        });
+        core.setOutput('release-pr-url', createdPr.html_url);
+        core.info(`Created release PR: ${owner}/${repo}/${headBranch}`);
+    }
+    catch (error) {
+        if (error instanceof request_error_1.RequestError && error.status === 422) {
+            core.info(error.message);
+            return;
+        }
+        core.warning(`Failed to create release PR: ${error}`);
+        throw error;
+    }
 }
 exports.run = run;
 
