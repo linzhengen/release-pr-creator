@@ -1,13 +1,12 @@
-# Create a GitHub Action Using TypeScript
+# release-pr-creator
+[![Lint Codebase](https://github.com/linzhengen/release-pr-creator/actions/workflows/linter.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/linter.yml)
+[![Continuous Integration](https://github.com/linzhengen/release-pr-creator/actions/workflows/ci.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/linzhengen/release-pr-creator/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/codeql-analysis.yml)
+[![Check Transpiled JavaScript](https://github.com/linzhengen/release-pr-creator/actions/workflows/check-dist.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/check-dist.yml)
 
-[![GitHub Super-Linter](https://github.com/actions/typescript-action/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
-![CI](https://github.com/actions/typescript-action/actions/workflows/ci.yml/badge.svg)
-[![Check dist/](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml)
-[![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml)
-[![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
+Create a pull request for a release branch
 
-# Usage
-
+## Usage
 ```yaml
 name: main-to-prod-pr-creator
 
@@ -31,5 +30,5 @@ jobs:
       'workflow_dispatch' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: linzhengen/release-pr-creator@v0.1.6
+      - uses: linzhengen/release-pr-creator@v0.1.7
 ```
