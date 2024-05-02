@@ -9,6 +9,7 @@ export async function run(): Promise<void> {
 
   const github = getOctokit(token)
   let prUrls = []
+  let lastCommitSha = context.sha
 
   try {
     const { data: diffCommits, status: status } =
@@ -33,6 +34,7 @@ export async function run(): Promise<void> {
       for (const associatedPR of commitPRs) {
         prUrls.push(associatedPR.html_url)
       }
+      lastCommitSha = commit.sha
     }
   } catch (error) {
     console.warn(`Failed to compare commits: ${error}, error: ${error}`)
@@ -41,7 +43,7 @@ export async function run(): Promise<void> {
 
   prUrls = [...new Set(prUrls)]
   const now = new Date()
-  const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${context.sha.substring(0, 7)} - RELEASE`
+  const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${lastCommitSha.substring(0, 7)} - RELEASE`
   const prBody = `# What's Changed\n${prUrls.map(url => `- ${url}`).join('\n')}`
 
   const { data: releasePRs } = await github.rest.pulls.list({

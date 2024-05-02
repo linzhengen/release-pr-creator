@@ -26,7 +26,9 @@ permissions:
 
 jobs:
   create-main-to-prod-pr:
-    if: ${{ github.event.pull_request.base.ref == 'prod' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+    if:
+      ${{ github.event.pull_request.base.ref == 'prod' || github.event_name ==
+      'workflow_dispatch' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - uses: linzhengen/release-pr-creator@v0.1.2

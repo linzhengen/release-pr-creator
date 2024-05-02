@@ -29278,26 +29278,38 @@ async function run() {
     const baseBranch = core.getInput('base-branch', { required: true });
     const headBranch = core.getInput('head-branch', { required: true });
     const github = (0, github_1.getOctokit)(token);
-    const { data: diffCommits } = await github.rest.repos.compareCommits({
-        owner,
-        repo,
-        base: baseBranch,
-        head: headBranch
-    });
     let prUrls = [];
-    for (const commit of diffCommits.commits) {
-        const { data: commitPRs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+    let lastCommitSha = github_1.context.sha;
+    try {
+        const { data: diffCommits, status: status } = await github.rest.repos.compareCommits({
             owner,
             repo,
-            commit_sha: commit.sha
+            base: baseBranch,
+            head: headBranch
         });
-        for (const associatedPR of commitPRs) {
-            prUrls.push(associatedPR.html_url);
+        if (status !== 200) {
+            console.warn(`Failed to compare commits: ${status}`);
+            return;
         }
+        for (const commit of diffCommits.commits) {
+            const { data: commitPRs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner,
+                repo,
+                commit_sha: commit.sha
+            });
+            for (const associatedPR of commitPRs) {
+                prUrls.push(associatedPR.html_url);
+            }
+            lastCommitSha = commit.sha;
+        }
+    }
+    catch (error) {
+        console.warn(`Failed to compare commits: ${error}, error: ${error}`);
+        return;
     }
     prUrls = [...new Set(prUrls)];
     const now = new Date();
-    const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${github_1.context.sha.substring(0, 7)} - RELEASE`;
+    const prTitle = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}/${lastCommitSha.substring(0, 7)} - RELEASE`;
     const prBody = `# What's Changed\n${prUrls.map(url => `- ${url}`).join('\n')}`;
     const { data: releasePRs } = await github.rest.pulls.list({
         owner,
