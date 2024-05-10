@@ -1,4 +1,5 @@
 # release-pr-creator
+
 [![Lint Codebase](https://github.com/linzhengen/release-pr-creator/actions/workflows/linter.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/linter.yml)
 [![Continuous Integration](https://github.com/linzhengen/release-pr-creator/actions/workflows/ci.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/linzhengen/release-pr-creator/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/linzhengen/release-pr-creator/actions/workflows/codeql-analysis.yml)
@@ -7,6 +8,7 @@
 Create a pull request for a release branch
 
 ## Usage
+
 ```yaml
 name: main-to-prod-pr-creator
 
