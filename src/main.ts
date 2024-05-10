@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import { context, getOctokit } from '@actions/github'
-import { RequestError } from '@octokit/request-error'
 
 export async function run(): Promise<void> {
   const { owner, repo } = context.repo
@@ -86,10 +85,6 @@ export async function run(): Promise<void> {
     core.setOutput('release-pr-url', createdPr.html_url)
     core.info(`Created release PR: ${owner}/${repo}/${headBranch}`)
   } catch (error) {
-    if (error instanceof RequestError && error.status === 422) {
-      core.info(error.message)
-      return
-    }
     core.warning(`Failed to create release PR: ${error}`)
     throw error
   }
