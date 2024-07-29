@@ -32,5 +32,5 @@ jobs:
       'workflow_dispatch' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: linzhengen/release-pr-creator@v0.1.7
+      - uses: linzhengen/release-pr-creator@v0.1.8
 ```
